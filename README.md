@@ -76,7 +76,7 @@ network_model = MODELS[0]  # (0 - DNN, 1 - LSTM (RNN))
 1
 ---
 The original tutorial uses regular lists for storing large sparse matrices and
-serializes them using the `pickle` module. This leads to very large files.
+serializes them either using the `pickle` module or as CSV files. This leads to very large files.
 
 In one case, a generated CSV file is __19.6GB__ in size.
 
