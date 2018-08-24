@@ -1,0 +1,43 @@
+
+training.1600000.processed.noemoticon.csv (1.6M samples)
+
+                     |
+                     |  <-- init_process -> Strip unnecessary columns (keep only tweet & label).
+                     |                      Strip neutral tweets (note: the dataset contains none).
+                     |
+
+               train_set.csv (1.6M samples - 0 neutral samples striped)
+
+                     |
+                     |  <-- shuffle_data -> Shuffle filtered dataset
+                     |
+
+           train_set_shuffled.csv (1.6M samples - 0 neutral samples striped)
+
+                     |
+                     |------------------------
+                     |                       |
+                     |                       |  <-- create_lexicon -> Create lexicon from shuffled, filtered dataset
+                     |                       |                        (only every 2500th tweet is used)
+                     |                       |
+                     |
+                     |             lexicon-2500-2638.json (List of 2638 strings)
+                     |
+                     |                       |
+                     |                       |
+                     -------------------------
+                               |
+                               |  <-- convert_to_vec -> Using the shuffled, filtered dataset and the lexicon,
+                               |                        create the feature matrix (bag of words) & labels
+                               |                       (as sparse matrices for space efficiency)
+                               |
+                  -----------------------------------------------------------------
+                  |                                                               |
+                  |                                                               |
+
+processed-train-set-2500-2638-features.npz                    processed-train-set-2500-2638-labels.npz
+(1.6M samples - 0 neutral samples striped)                   (1.6M samples - 0 neutral samples striped)
+
+
+______________________________________________________________
+Optimisation -> 19.6GB (1 csv file) down to 26.7MB (2 npz files)
