@@ -3,9 +3,11 @@
 Based on [sentdex's](https://www.youtube.com/channel/UCfzlCWGWYyIQ0aLC5w48gBQ)
 tutorial at [https://www.youtube.com/watch?v=6rDWwL6irG0](https://www.youtube.com/watch?v=6rDWwL6irG0)
 
-Contains code for a DNN and an LSTM (RNN).
+Contains code for DNN, LSTM (RNN) and CNN.
 
-__NOTE: LSTM (RNN) code is buggy.__
+__NOTES:__
+- LSTM (RNN) code is buggy.
+- CNN only tested with MNIST dataset.
 
 ### Prerequisites:
 Required dependencies:
@@ -68,7 +70,7 @@ SMALL_DATA = False
 USE_MNIST = False
 
 # TODO: LSTM (RNN) model is buggy (chunking part during training)
-network_model = MODELS[0]  # (0 - DNN, 1 - LSTM (RNN))
+network_model = MODELS[0]  # (0 - DNN, 1 - LSTM (RNN), 2 - CNN)
 ```
 
 ### Improvements:
