@@ -45,7 +45,7 @@ def rnn_lstm(x, _num_features, _n_classes, **kwargs):
 
     # Reshape x
     x = tf.transpose(x, [1, 0, 2])
-    x = tf.reshape(x, [-1, kwargs['chunk_size']])
+    x = tf.reshape(x, shape=[-1, kwargs['chunk_size']])
     x = tf.split(x, kwargs['n_chunks'])
 
     # Create LSTM cell
@@ -58,6 +58,59 @@ def rnn_lstm(x, _num_features, _n_classes, **kwargs):
 
     # Return output
     return tf.matmul(outputs[-1:], weights) + biases
+
+
+def conv2d(x, W):
+    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+
+
+def maxpool2d(x):
+    #                          size of window      movement of window
+    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
+
+
+def cnn(x, _num_features, _n_classes, **kwargs):
+    # Set parameter default
+    keep_rate = kwargs['keep_rate'] or 0.8
+
+    # Reshape x (from flat image to 28x28 image
+    x = tf.reshape(x, shape=[-1, 28, 28, 1])
+
+    # Define layer variables
+    weights = {
+        # 5x5 convolution, 1 input, will output 32 features
+        'W_conv_1': tf.Variable(tf.random_normal(shape=[5, 5, 1, 32])),
+        # 5x5 convolution, 32 inputs, will output 64 features
+        'W_conv_2': tf.Variable(tf.random_normal(shape=[5, 5, 32, 64])),
+        # Each convolution layer downsamples the image in half: 28x28 - 14x14 - 7x7
+        # 7x7 image (after convolution), 64 features, 1024 nodes in dense layer
+        'W_fc': tf.Variable(tf.random_normal(shape=[7 * 7 * 64, 1024])),
+        'out': tf.Variable(tf.random_normal(shape=[1024, _n_classes])),
+    }
+
+    biases = {
+        'b_conv_1': tf.Variable(tf.random_normal(shape=[32])),
+        'b_conv_2': tf.Variable(tf.random_normal(shape=[64])),
+        'b_fc': tf.Variable(tf.random_normal(shape=[1024])),
+        'out': tf.Variable(tf.random_normal(shape=[_n_classes])),
+    }
+
+    # Create convolution (with pool) layers
+    conv_1 = tf.nn.relu(conv2d(x, weights['W_conv_1']) + biases['b_conv_1'])
+    conv_1 = maxpool2d(conv_1)
+
+    conv_2 = tf.nn.relu(conv2d(conv_1, weights['W_conv_2']) + biases['b_conv_2'])
+    conv_2 = maxpool2d(conv_2)
+
+    # Create fully connected layer
+    fc = tf.reshape(conv_2, [-1, 7 * 7 * 64])
+    fc = tf.nn.relu(tf.matmul(fc, weights['W_fc']) + biases['b_fc'])
+
+    # Apply dropout regularization on the fc layer
+    fc = tf.nn.dropout(fc, keep_rate)
+
+    # Return output
+    return tf.matmul(fc, weights['out']) + biases['out']
 
 
 def train_neural_network(_data, model_fn, n_epochs=10, batch_sz=100, do_chunks=False, unpack_sparse=False, **kwargs):
@@ -130,8 +183,9 @@ def train_neural_network(_data, model_fn, n_epochs=10, batch_sz=100, do_chunks=F
                 pbar.set_description('Epoch {0:>3} / {1} -> Loss: {2}'.format(epoch + 1, n_epochs, train_loss))
                 pbar.update()
 
-        _x_test = _data['test']['x']
-        _y_test = _data['test']['y']
+        # Limit the size of test set to prevent out of GPU VRAM errors
+        _x_test = _data['test']['x'][:256]
+        _y_test = _data['test']['y'][:256]
 
         if unpack_sparse:
             # The data is made out of sparse matrices.
@@ -225,11 +279,12 @@ def load_mnist_data():
 if __name__ == '__main__':
     # Set program parameters
     SMALL_DATA = False
-    USE_MNIST = False
+    USE_MNIST = True
 
     MODELS = [
         {'fn': 'dnn', 'kwargs': {}},
         {'fn': 'rnn_lstm', 'kwargs': {'do_chunks': True, 'rnn_size': 128}},
+        {'fn': 'cnn', 'kwargs': {'keep_rate': 0.8}},
     ]
 
     for k, model in enumerate(MODELS):
@@ -255,7 +310,7 @@ if __name__ == '__main__':
     }
 
     # TODO: LSTM (RNN) model is buggy (chunking part during training)
-    network_model = MODELS[0]  # (0 - DNN, 1 - LSTM (RNN))
+    network_model = MODELS[2]  # (0 - DNN, 1 - LSTM (RNN))
 
     if USE_MNIST:
         num_epochs, batch_size = 10, 128
