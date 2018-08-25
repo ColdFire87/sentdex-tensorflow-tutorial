@@ -310,7 +310,7 @@ if __name__ == '__main__':
     }
 
     # TODO: LSTM (RNN) model is buggy (chunking part during training)
-    network_model = MODELS[2]  # (0 - DNN, 1 - LSTM (RNN))
+    network_model = MODELS[2]  # (0 - DNN, 1 - LSTM (RNN), 2 - CNN)
 
     if USE_MNIST:
         num_epochs, batch_size = 10, 128
